@@ -1,6 +1,5 @@
 <template>
   <q-layout view="lHh lpR lFf">
-
     <q-header elevated class="bg-primary text-white" height-hint="98">
       <q-toolbar>
         <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
@@ -9,23 +8,21 @@
           <!-- <q-avatar>
             <img src="https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg">
           </q-avatar> -->
-          Application Title & Logo
+          TEL Intelligent Etch Dashboard
         </q-toolbar-title>
-
+        <q-tabs align="left">
+          <q-route-tab to="/" label="Dashboard" />
+          <q-route-tab to="/audit" label="Login Audit" />
+        </q-tabs>
         <q-btn dense flat round icon="menu" @click="toggleRightDrawer" />
       </q-toolbar>
-
-      <q-tabs align="left">
-        <q-route-tab to="/page1" label="Dashboard" />
-        <q-route-tab to="/page2" label="Login Audit" />
-      </q-tabs>
     </q-header>
 
-    <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
+    <q-drawer v-model="leftDrawerOpen" side="left" bordered>
       <!-- drawer content -->
     </q-drawer>
 
-    <q-drawer show-if-above v-model="rightDrawerOpen" side="right" bordered>
+    <q-drawer v-model="rightDrawerOpen" side="right" bordered>
       <!-- drawer content -->
     </q-drawer>
 
@@ -40,29 +37,19 @@
         </q-toolbar-title>
       </q-toolbar>
     </q-footer>
-
   </q-layout>
 </template>
 
-<script>
-import { ref } from 'vue'
+<script setup>
+import { ref } from "vue";
+const leftDrawerOpen = ref(false);
+const rightDrawerOpen = ref(false);
 
-export default {
-  setup () {
-    const leftDrawerOpen = ref(false)
-    const rightDrawerOpen = ref(false)
+const toggleLeftDrawer = () => {
+  leftDrawerOpen.value = !leftDrawerOpen.value;
+};
 
-    return {
-      leftDrawerOpen,
-      toggleLeftDrawer () {
-        leftDrawerOpen.value = !leftDrawerOpen.value
-      },
-
-      rightDrawerOpen,
-      toggleRightDrawer () {
-        rightDrawerOpen.value = !rightDrawerOpen.value
-      }
-    }
-  }
-}
+const toggleRightDrawer = () => {
+  rightDrawerOpen.value = !rightDrawerOpen.value;
+};
 </script>

@@ -113,9 +113,7 @@
           <div class="text-h5 text-primary text-weight-bold">
             Daily OOC Summary
           </div>
-          <div>
-            chart
-          </div>
+          <CLine v-if="!oocLoading" :chartData="dataOfOOC" />
         </div>
       </div>
       <div class="col"></div>
@@ -128,7 +126,9 @@ import { computed, onMounted, ref } from "vue";
 import { getCssVar, useQuasar } from "quasar";
 import CBar from "src/components/CBar.vue";
 import CBarCombineLine from "src/components/CBarCombineLine.vue";
+import CLine from "../components/CLine.vue";
 import { api } from "src/boot/axios";
+import { CHART_COLORS_ARR } from "src/utils/color";
 
 const $q = useQuasar();
 
@@ -145,7 +145,7 @@ const dataOfGolenCham = ref({});
 const dataOfG2G = ref({});
 const dataOfOER = ref([]);
 const chatDataOER = ref({});
-const dataOfOOC = ref([]);
+const dataOfOOC = ref({});
 const dataOfPM = ref([]);
 const dataOfSeason = ref([]);
 
@@ -262,6 +262,52 @@ function fillOERData(data) {
   chatDataOER.value = { ...updatedChartData };
   oerLoading.value = false;
 }
+function fillOOCData(data) {
+  const validData = data
+    .filter((d) => d.OOC && d.OOC !== "")
+    .map((d) => {
+      const formatDate = d.lastDate.split("/");
+      return {
+        ...d,
+        lastDate: formatDate[1] + "/" + formatDate[0],
+      };
+    })
+    .sort((a, b) => {
+      const aTime = new Date(a.lastDate).getTime();
+      const bTime = new Date(b.lastDate).getTime();
+      return aTime - bTime;
+    });
+  const sets = {};
+  validData.forEach((d) => {
+    if (sets[d["﻿Tool/Chamber"]]) {
+      sets[d["﻿Tool/Chamber"]].push(d);
+    } else {
+      sets[d["﻿Tool/Chamber"]] = [d];
+    }
+  });
+  const dataSetslabels = Object.keys(sets);
+  let labels = [];
+  for (let k in sets) {
+    sets[k].forEach((s) => {
+      labels.push(s.lastDate);
+    });
+    // console.log(k, sets[k]);
+  }
+  labels = Array.from(new Set(labels));
+
+  const updatedChartData = {
+    labels,
+    datasets: dataSetslabels.map((d, i) => ({
+      label: d,
+      data: sets[d].map((d) => Number(d.OOC)),
+      borderColor: CHART_COLORS_ARR[i],
+      backgroundColor: CHART_COLORS_ARR[i],
+      fill: true,
+    })),
+  };
+  // console.log(updatedChartData);
+  dataOfOOC.value = { ...updatedChartData };
+}
 
 function startLoading() {
   goldenChamDataLoading.value = true;
@@ -305,7 +351,6 @@ async function loadOER() {
   try {
     const { data } = await api.get("/getOer");
     dataOfOER.value = data.data;
-    console.log("loadOER", data.data);
     fillOERData(data.data);
   } catch (error) {
     showErrorNotify("Fetch OER failed...");
@@ -315,8 +360,7 @@ async function loadOER() {
 async function loadOOC() {
   try {
     const { data } = await api.get("/getOoc");
-    dataOfOOC.value = data;
-    console.log("loadOOC", data);
+    fillOOCData(data.data);
   } catch (error) {
     showErrorNotify("Fetch OOC failed...");
   }

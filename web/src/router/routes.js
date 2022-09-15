@@ -7,12 +7,26 @@ const routes = [
     path: "/dashboard",
     component: () => import("layouts/MainLayout.vue"),
     children: [
-      { path: "", component: () => import("pages/IndexPage.vue") },
-      { path: "/audit", component: () => import("pages/LoginAudit.vue") },
+      {
+        path: "",
+        component: () => import("pages/IndexPage.vue"),
+        meta: { role: ["admin", "user"] },
+      },
+      {
+        path: "/audit",
+        component: () => import("pages/LoginAudit.vue"),
+        meta: { role: ["admin"] },
+      },
+      {
+        path: "/users",
+        component: () => import("pages/UserManage.vue"),
+        meta: { role: ["admin"] },
+      },
     ],
   },
   {
     path: "/login",
+    name: "login",
     component: () => import("pages/LoginPage.vue"),
   },
 

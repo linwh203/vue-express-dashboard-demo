@@ -13,10 +13,10 @@ app.use(bodyParser.json())
 
 app.all("*", function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*")
-  res.header("Access-Control-Allow-Headers", "X-Requested-With")
-  res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS")
-  res.header("X-Powered-By", " 3.2.1")
+  res.header("Access-Control-Allow-Headers", "Authorization,X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method")
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PATCH, PUT, DELETE")
   res.header("Content-Type", "application/json;charset=utf-8")
+  res.header("Allow", "GET, POST, PATCH, OPTIONS, PUT, DELETE")
   next()
 })
 
@@ -96,31 +96,53 @@ app.get("/api/getSeason", (req, res) => {
   })
 })
 
-app.post("/login", (req, res) => {
+app.get("/api/getUserList", (req, res) => {
+  fs.readFile("./user/user.json", "utf-8", (err, data) => {
+     if (err) {
+       res.status(200).send({
+         code: -2,
+         msg: "Failed to get user from db!",
+       })
+       throw err
+     }
+     // parse JSON object
+     const userList = JSON.parse(data.toString())
+     res.status(200).send({
+       code: 0,
+       msg: "Success",
+       data: userList,
+     })
+  })
+})
+
+app.post("/api/login", (req, res) => {
   const { username, password } = req.body
   if (username && password) {
-    if (username === "admin" && password === "1234") {
-      res.status(200).send({
-        code: 0,
-        msg: "Success",
-        data: {
-          role: "admin",
-        },
-      })
-    } else if (username === "user1" && password === "1234") {
-      res.status(200).send({
-        code: 0,
-        msg: "Success",
-        data: {
-          role: "user",
-        },
-      })
-    } else {
-      res.status(200).send({
-        code: -1,
-        msg: "Username or Password is not correct!",
-      })
-    }
+    fs.readFile("./user/user.json", "utf-8", (err, data) => {
+      if (err) {
+        res.status(200).send({
+          code: -2,
+          msg: "Failed to get user from db!",
+        })
+        throw err
+      }
+      // parse JSON object
+      const userList = JSON.parse(data.toString())
+      // print JSON object
+      const user = userList.find((u) => ((u.username == username) && (u.password == password)))
+      if (user) {
+        res.status(200).send({
+          code: 0,
+          msg: "Success",
+          data: user,
+        })
+      } else {
+        res.status(200).send({
+          code: -1,
+          msg: "Username or Password is not correct!",
+        })
+      }
+    })
   } else {
     res.status(200).send({
       code: -1,

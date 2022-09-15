@@ -1,11 +1,9 @@
 <template>
   <div>
-    <Line
+    <PolarArea
       :chart-options="props.chartOptions"
       :chart-data="props.chartData"
       :chart-id="props.chartId"
-      :dataset-id-key="props.datasetIdKey"
-      :plugins="props.plugins"
       :css-classes="props.cssClasses"
       :styles="props.styles"
       :width="props.width"
@@ -16,28 +14,18 @@
 
 <script setup>
 import { defineProps } from "vue";
-import { Line } from "vue-chartjs";
+import { PolarArea } from "vue-chartjs";
 import {
   Chart as ChartJS,
   Title,
   Tooltip,
   Legend,
-  LineElement,
-  LinearScale,
-  PointElement,
-  CategoryScale,
+  ArcElement,
+  RadialLinearScale,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
-ChartJS.register(
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  LinearScale,
-  PointElement,
-  CategoryScale
-);
+ChartJS.register(Title, Tooltip, Legend, ArcElement, RadialLinearScale);
 
 // ChartJS.register(ChartDataLabels);
 
@@ -48,11 +36,11 @@ const props = defineProps({
   },
   chartId: {
     type: String,
-    default: "line-chart",
+    default: "polar-chart",
   },
   width: {
     type: Number,
-    default: 400,
+    default: 200,
   },
   height: {
     type: Number,
@@ -70,31 +58,23 @@ const props = defineProps({
     type: Object,
     default: () => ({
       responsive: true,
-      interaction: {
-        mode: "nearest",
-        axis: "x",
-        intersect: false,
-      },
+      maintainAspectRatio: false,
       scales: {
-        x: {
-          title: {
+        r: {
+          pointLabels: {
             display: true,
-            text: "Date",
-          },
-        },
-        y: {
-          stacked: false,
-          title: {
-            display: true,
-            text: "OOC",
+            centerPointLabels: true,
+            font: {
+              size: 10,
+            },
           },
         },
       },
       plugins: {
         legend: {
           display: true,
-          position: "right",
-          align: 'start',
+          position: "left",
+          align: "start",
           labels: {
             usePointStyle: true,
             pointStyle: "circle",
@@ -105,10 +85,6 @@ const props = defineProps({
         },
       },
     }),
-  },
-  plugins: {
-    type: Array,
-    default: () => [],
   },
 });
 </script>

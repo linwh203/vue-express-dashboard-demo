@@ -3,7 +3,12 @@ const bodyParser = require("body-parser")
 const parse = require("csv-parse").parse
 const fs = require("fs")
 const path = require("path")
-const folderName = require("./folder-config")
+// const folderName = require("./folder-config")
+
+const dotenv = require("dotenv")
+dotenv.config()
+
+const folderName = process.env.DATA_PATH
 
 const app = express()
 const port = 3001

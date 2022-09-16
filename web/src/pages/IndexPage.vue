@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-px-lg q-py-sm flex flex-center">
+  <q-page class="q-px-lg q-py-sm flex flex-center" :style-fn="myTweak">
     <div class="container">
       <div class="row">
         <div class="flex col shadow-1 row">
@@ -126,7 +126,7 @@
             <div class="text-h5 text-primary text-weight-bold q-pb-md">
               Daily OOC Summary
             </div>
-            <CLine v-if="!oocLoading" :chartData="dataOfOOC" />
+            <CLine v-if="!oocLoading" :chartData="dataOfOOC" :height="160" />
             <q-inner-loading :showing="oocLoading">
               <q-spinner-bars size="50px" color="primary" />
             </q-inner-loading>
@@ -158,6 +158,7 @@
                 v-if="!seasonLoading"
                 :chartData="dataOfSeason"
                 :chartOptions="chatOptionSeason"
+                :height="140"
               />
               <q-inner-loading :showing="seasonLoading">
                 <q-spinner-bars size="50px" color="primary" />
@@ -629,6 +630,14 @@ function showErrorNotify(message = "", position = "top") {
     message,
   });
 }
+
+const myTweak = (offset) => {
+  // "offset" is a Number (pixels) that refers to the total
+  // height of header + footer that occupies on screen,
+  // based on the QLayout "view" prop configuration
+  // this is actually what the default style-fn does in Quasar
+  return { minHeight: offset ? `calc(100vh - ${offset}px)` : '100vh' }
+};
 
 onMounted(() => {
   startLoading();

@@ -122,11 +122,15 @@
       </div>
       <div class="row">
         <div class="col-7 shadow-1">
-          <div class="q-pa-lg relative-position">
+          <div class="q-pa-lg relative-position full-height chartBlock">
             <div class="text-h5 text-primary text-weight-bold q-pb-md">
               Daily OOC Summary
             </div>
-            <CLine v-if="!oocLoading" :chartData="dataOfOOC" :height="160" />
+            <CLine
+              v-if="!oocLoading"
+              :chartData="dataOfOOC"
+              :height="160"
+            />
             <q-inner-loading :showing="oocLoading">
               <q-spinner-bars size="50px" color="primary" />
             </q-inner-loading>
@@ -636,7 +640,7 @@ const myTweak = (offset) => {
   // height of header + footer that occupies on screen,
   // based on the QLayout "view" prop configuration
   // this is actually what the default style-fn does in Quasar
-  return { minHeight: offset ? `calc(100vh - ${offset}px)` : '100vh' }
+  return { minHeight: offset ? `calc(100vh - ${offset}px)` : "100vh" };
 };
 
 onMounted(() => {
@@ -655,6 +659,10 @@ onMounted(() => {
 .container {
   width: 100%;
   height: 100%;
+}
+.chartBlock  {
+  display: grid;
+  // align-items: center;
 }
 .chart-golden-cham {
   // height: 400px;

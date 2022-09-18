@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 export const useUserStore = defineStore("user", {
   state: () => ({
-    id: 0,
+    id: -1,
     username: "",
     role: "",
   }),
@@ -16,5 +16,11 @@ export const useUserStore = defineStore("user", {
       this.username = username
       this.role = role
     },
+    logout() {
+      console.log('start logout');
+      this.id = -1;
+      this.username = "";
+      this.role = "";
+    }
   },
 });

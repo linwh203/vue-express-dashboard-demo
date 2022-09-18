@@ -12,6 +12,7 @@
         :loading="loading"
         :rows-per-page-options="[10, 20]"
         :filter="filter"
+        :table-class="`myTable`"
       >
         <template v-slot:top>
           <div class="flex full-width justify-between items-center">
@@ -52,8 +53,102 @@
         </template>
       </q-table>
 
-      <div class="q-mt-md">Selected: {{ JSON.stringify(selected) }}</div>
+      <div class="q-mt-md">
+        Selected User:
+        {{ selected.length ? selected.map((s) => s.username).join(", ") : "" }}
+      </div>
     </div>
+    <q-dialog
+      v-model="addform"
+      persistent
+      transition-show="scale"
+      transition-hide="scale"
+    >
+      <q-card class="bg-secondary text-white" style="width: 500px">
+        <q-card-section>
+          <div class="text-h6">ADD USER</div>
+        </q-card-section>
+        <form @submit.prevent.stop="onSubmit" class="q-gutter-md q-pa-lg">
+          <q-input
+            dark
+            v-model="addUsername"
+            filled
+            required
+            type="text"
+            hint="Username"
+          />
+          <q-input
+            dark
+            v-model="addUserpsw"
+            filled
+            type="password"
+            hint="Password"
+          >
+          </q-input>
+          <div class="flex items-center q-gutter-lg q-px-lg q-pt-md">
+            <span>Role: </span>
+            <q-radio
+              v-model="addUserrole"
+              val="admin"
+              label="admin"
+              dark
+              color="dark"
+            />
+            <q-radio
+              v-model="addUserrole"
+              val="user"
+              label="user"
+              dark
+              color="dark"
+            />
+          </div>
+          <div class="text-right q-gutter-lg q-pt-lg">
+            <q-btn label="Add" type="submit" color="secondary" />
+            <q-btn
+              flat
+              label="CANCEL"
+              color="white"
+              @click="cancelAddform"
+              v-close-popup
+            />
+          </div>
+        </form>
+        <q-card-section class="q-pt-none"> </q-card-section>
+      </q-card>
+    </q-dialog>
+    <q-dialog
+      v-model="persistent"
+      persistent
+      transition-show="scale"
+      transition-hide="scale"
+    >
+      <q-card class="bg-negative text-white" style="width: 500px">
+        <q-card-section>
+          <div class="text-h6">DELETE USER!</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <p>Are you sure to delete user:</p>
+          <p>
+            {{
+              selected.length ? selected.map((s) => s.username).join(", ") : ""
+            }}
+          </p>
+        </q-card-section>
+
+        <q-card-actions align="right" class="bg-white text-teal">
+          <q-btn
+            flat
+            label="DELETE"
+            color="negative"
+            @click="confirmDelete"
+            v-close-popup
+          />
+
+          <q-btn flat label="CANCEL" color="secondary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -81,6 +176,13 @@ const columns = [
     sortable: true,
   },
   {
+    name: "password",
+    label: "Password",
+    align: "left",
+    field: (row) => row.password,
+    sortable: false,
+  },
+  {
     name: "role",
     label: "User Role",
     align: "left",
@@ -90,13 +192,100 @@ const columns = [
 const rows = ref([]);
 const loading = ref(false);
 const filter = ref("");
+const persistent = ref(false);
+const addform = ref(false);
+const addUsername = ref("");
+const addUserpsw = ref("");
+const addUserrole = ref("user");
 
 function addUser() {
-
+  addform.value = true;
 }
 
 function deleteUser() {
-  
+  if (selected.value.length) {
+    persistent.value = true;
+  }
+}
+
+function cancelAddform() {
+  addUsername.value = "";
+  addUserpsw.value = "";
+}
+
+async function onSubmit() {
+  loading.value = true;
+  try {
+    addform.value = false;
+    const { data } = await api.post("/addUser", {
+      username: addUsername.value,
+      password: addUserpsw.value,
+      role: addUserrole.value,
+    });
+    if (data.code !== 0) {
+      $q.notify({
+        type: "negative",
+        message: "add user failed: " + data.msg,
+        position: "center",
+      });
+    } else {
+      $q.notify({
+        type: "positive",
+        message: "add user success",
+        position: "center",
+        timeout: 2000,
+      });
+      addUsername.value = "";
+      addUserpsw.value = "";
+      loadUserList();
+    }
+    loading.value = false;
+  } catch (error) {
+    $q.notify({
+      type: "negative",
+      message: "add user failed: " + error,
+      position: "center",
+    });
+    loading.value = false;
+  }
+}
+
+async function confirmDelete() {
+  if (selected.value.some((item) => item.role == "admin")) {
+    $q.notify({
+      type: "negative",
+      message: "can not delete admin user",
+      position: "center",
+      timeout: 2000,
+    });
+    return;
+  }
+  try {
+    const { data } = await api.post("/deleteUser", {
+      id: selected.value.map((item) => item.id),
+    });
+    if (data.code !== 0) {
+      $q.notify({
+        type: "negative",
+        message: "delete user failed: " + data.msg,
+        position: "center",
+      });
+    } else {
+      $q.notify({
+        type: "positive",
+        message: "delete user success",
+        position: "center",
+        timeout: 2000,
+      });
+      loadUserList();
+    }
+  } catch (error) {
+    $q.notify({
+      type: "negative",
+      message: "delete user failed: " + error,
+      position: "center",
+    });
+  }
 }
 
 function getSelectedString() {
@@ -124,7 +313,12 @@ onMounted(() => {
   loading.value = true;
   setTimeout(() => {
     loadUserList();
-  }, 1000);
+  }, 500);
   // loadUserList();
 });
 </script>
+<style lang="scss">
+.myTable {
+  min-height: 72vh;
+}
+</style>

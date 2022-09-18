@@ -9,6 +9,8 @@ const dotenv = require("dotenv")
 dotenv.config()
 
 const folderName = process.env.DATA_PATH
+const userFIlePath = "./user/user.json"
+const logPath = "./logs/login.json"
 
 const app = express()
 const port = 3001
@@ -102,28 +104,28 @@ app.get("/api/getSeason", (req, res) => {
 })
 
 app.get("/api/getUserList", (req, res) => {
-  fs.readFile("./user/user.json", "utf-8", (err, data) => {
-     if (err) {
-       res.status(200).send({
-         code: -2,
-         msg: "Failed to get user from db!",
-       })
-       throw err
-     }
-     // parse JSON object
-     const userList = JSON.parse(data.toString())
-     res.status(200).send({
-       code: 0,
-       msg: "Success",
-       data: userList,
-     })
+  fs.readFile(userFIlePath, "utf-8", (err, data) => {
+    if (err) {
+      res.status(200).send({
+        code: -2,
+        msg: "Failed to get user from db!",
+      })
+      throw err
+    }
+    // parse JSON object
+    const userList = JSON.parse(data.toString())
+    res.status(200).send({
+      code: 0,
+      msg: "Success",
+      data: userList,
+    })
   })
 })
 
-app.post("/api/login", (req, res) => {
+app.post("/api/login", async (req, res) => {
   const { username, password } = req.body
   if (username && password) {
-    fs.readFile("./user/user.json", "utf-8", (err, data) => {
+    fs.readFile(userFIlePath, "utf-8", (err, data) => {
       if (err) {
         res.status(200).send({
           code: -2,
@@ -134,13 +136,15 @@ app.post("/api/login", (req, res) => {
       // parse JSON object
       const userList = JSON.parse(data.toString())
       // print JSON object
-      const user = userList.find((u) => ((u.username == username) && (u.password == password)))
+      const user = userList.find((u) => u.username == username && u.password == password)
       if (user) {
         res.status(200).send({
           code: 0,
           msg: "Success",
           data: user,
         })
+        // write login log
+        writeLoginLogUserLogin(user)
       } else {
         res.status(200).send({
           code: -1,
@@ -155,6 +159,124 @@ app.post("/api/login", (req, res) => {
     })
   }
 })
+app.post("/api/logout", async (req, res) => {
+  const { id, username } = req.body
+  res.status(200).send({
+    code: 0,
+    msg: "Logout success",
+  })
+  writeLoginLogUserLogout(id, username)
+})
+app.post("/api/addUser", (req, res) => {
+  const { username, password, role } = req.body
+  if (username && password) {
+    fs.readFile(userFIlePath, "utf-8", (err, data) => {
+      if (err) {
+        res.status(200).send({
+          code: -2,
+          msg: "Failed to get user from db!",
+        })
+        throw err
+      }
+      // parse JSON object
+      const userList = JSON.parse(data.toString())
+      const duplicateUser = userList.find((user) => user.username === username)
+      if (duplicateUser) {
+        res.status(200).send({
+          code: -1,
+          msg: "Username has already existed!",
+        })
+        return
+      }
+      // print JSON object
+      const newUser = {
+        id: userList[userList.length - 1].id + 1,
+        username,
+        password,
+        role,
+      }
+      const newData = userList.concat(newUser)
+      fs.writeFile(userFIlePath, JSON.stringify(newData), (err) => {
+        if (err) {
+          res.status(200).send({
+            code: -2,
+            msg: "Error insert db!" + err,
+          })
+        } else {
+          res.status(200).send({
+            code: 0,
+            msg: "Add user success",
+          })
+        }
+      })
+    })
+  } else {
+    res.status(200).send({
+      code: -1,
+      msg: "Username or Password is not correct!",
+    })
+  }
+})
+app.post("/api/deleteUser", (req, res) => {
+  const { id } = req.body
+  if (id) {
+    fs.readFile("./user/user.json", "utf-8", (err, data) => {
+      if (err) {
+        res.status(200).send({
+          code: -2,
+          msg: "Failed to get user from db!",
+        })
+        throw err
+      }
+      let userList = JSON.parse(data.toString())
+      id.forEach((d) => {
+        userList = userList.filter((user) => user.id !== d)
+      })
+      fs.writeFile(userFIlePath, JSON.stringify(userList), (err) => {
+        if (err) {
+          res.status(200).send({
+            code: -2,
+            msg: "Error insert db!" + err,
+          })
+        } else {
+          res.status(200).send({
+            code: 0,
+            msg: "Delete user success",
+          })
+        }
+      })
+    })
+  } else {
+    res.status(200).send({
+      code: -1,
+      msg: "Please select user first!",
+    })
+  }
+})
+
+app.post("/api/getAuditLog", (req, res) => {
+  const { startTime, endTime } = req.body
+  fs.readFile(logPath, "utf-8", (err, data) => {
+    if (err) {
+      res.status(200).send({
+        code: -2,
+        msg: "Failed to get user from db!",
+      })
+      throw err
+    }
+    // parse JSON object
+    const loginLog = JSON.parse(data.toString())
+    let validLog = loginLog.filter((log) => {
+      return(startTime < log.time && log.time < endTime)
+    })
+    // console.log(validLog)
+    res.status(200).send({
+      code: 0,
+      msg: "Success",
+      data: validLog,
+    })
+  })
+})
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
@@ -166,4 +288,47 @@ function getCsvData() {
     ret[k] = fs.readFileSync(csvPaths[k], { encoding: "utf-8" })
   }
   return ret
+}
+
+function writeLoginLogUserLogin(user) {
+  const newLog = {
+    time: new Date().getTime(),
+    id: user.id,
+    username: user.username,
+    type: 'login'
+  }
+  fs.readFile(logPath, "utf-8", (err, data) => {
+    if (err) {
+      console.log("failed get log file");
+      throw err
+    }
+    const loginLogs = JSON.parse(data.toString())
+    loginLogs.unshift(newLog)
+    fs.writeFile(logPath, JSON.stringify(loginLogs), (err) => {
+      if (err) {
+        console.log("insert log failed!")
+      }
+    })
+  })
+}
+function writeLoginLogUserLogout(id, username) {
+  const newLog = {
+    time: new Date().getTime(),
+    id: id,
+    username: username,
+    type: 'logout'
+  }
+  fs.readFile(logPath, "utf-8", (err, data) => {
+    if (err) {
+      console.log("failed get log file");
+      throw err
+    }
+    const loginLogs = JSON.parse(data.toString())
+    loginLogs.unshift(newLog)
+    fs.writeFile(logPath, JSON.stringify(loginLogs), (err) => {
+      if (err) {
+        console.log("insert log failed!")
+      }
+    })
+  })
 }

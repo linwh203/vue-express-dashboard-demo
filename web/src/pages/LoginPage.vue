@@ -100,7 +100,9 @@ const onSubmit = async () => {
       message: "Login Success!",
     });
     const toPath = route.query.next ? route.query.next : "/dashboard";
-    router.replace(toPath);
+    setTimeout(() => {
+      router.replace(toPath);
+    }, 1000);
   }
 };
 
@@ -111,14 +113,7 @@ const onReset = () => {
   passwordRef.value.resetValidation();
 };
 
-onMounted(() => {
-  // api.get("/getGolenChamData").then((res) => {
-  //   console.log(res.data);
-  // });
-  // api.get("/getGolenCham").then((res) => {
-  //   console.log(res.data);
-  // });
-});
+onMounted(() => {});
 </script>
 <style lang="scss">
 .loginPage {

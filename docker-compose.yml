@@ -4,10 +4,12 @@ services:
     build: ./web
     ports:
       - 80:80
+    image: weihlin/web:test-1
   api:
     build: ./express
     ports:
       - 3001:3001
     environment:
       - DATA_PATH=csv
+    image: weihlin/api:test-1
     

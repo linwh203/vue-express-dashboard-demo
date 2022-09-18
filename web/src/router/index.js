@@ -38,9 +38,9 @@ export default route(function ({ store }) {
 
   Router.beforeEach((to, from, next) => {
     // !TODO 开发用，取消验证
-    next()
+    // next()
     const store = useUserStore();
-    console.log(to, from);
+    // console.log(to, from);
     if (to.meta.role && !to.meta.role.includes(store.role)) {
       if (store.role !== "") {
         next("/dashboard");
